@@ -5,9 +5,10 @@
 #include <gint/clock.h>
 #include <gint/timer.h>
 #include <gint/rtc.h>
+#include <gint/gint.h>
 #include <array>
 #include <rand.h>
-#include <ctime>
+#include <cstdint>
 
 /// @brief Mostly unbiased random number generation withing range
 /// @param range maximum value + 1
@@ -56,6 +57,7 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphBonny = {{
 }};
 Cam posBonny = CAM_1A;
 uint lvlBonny = 20; // 20 for testing purposes
+uint ticksBonny = (uint)(4.97/0.005);
 
 constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphChica = {{
     /* OFFICE */ {CAM_4A, CAM_COUNT},
@@ -75,6 +77,7 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphChica = {{
 }};
 Cam posChica = CAM_1A;
 uint lvlChica = 20; // 20 for testing purposes
+uint ticksChica = (uint)(4.98/0.005);
 
 constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphFreddy = {{
     /* OFFICE */ {CAM_4A, CAM_COUNT},
@@ -94,12 +97,16 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphFreddy = {{
 }};
 Cam posFreddy = CAM_1A;
 uint lvlFreddy = 20; // 20 for testing purposes
+uint ticksFreddy = (uint)(3.02/0.005);
 
 
 bool leftDoorClosed = false;
 bool rightDoorClosed = false;
 bool dead = false;
 Cam currentCam = OFFICE;
+uint64_t gameTicks = 0;
+uint64_t freddyWait = 0;
+
 
 void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos, bool* door) {
 	int chosen = bounded_rand(2);
@@ -118,33 +125,42 @@ void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos
 	return;
 }
 
-int tickAnimatronics() {
-	if(bounded_rand(20) + 1 <= lvlBonny) {move(graphBonny, &posBonny, &leftDoorClosed);}
-	if(bounded_rand(20) + 1 <= lvlChica) {move(graphChica, &posChica, &rightDoorClosed);}
-	
-	return TIMER_CONTINUE;
+int tickAll() {
+    gameTicks += 1;
+
+    if(gameTicks % ticksBonny == 0) {
+        if(bounded_rand(20) + 1 <= lvlBonny) {move(graphBonny, &posBonny, &leftDoorClosed);}
+    }
+    if(gameTicks % ticksChica == 0) {
+        if(bounded_rand(20) + 1 <= lvlChica) {move(graphChica, &posChica, &rightDoorClosed);}
+    }
+    if(gameTicks % ticksFreddy == 0) {
+        if(bounded_rand(20) + 1 <= lvlFreddy && currentCam != posFreddy && freddyWait == 0) {
+            uint64_t wait = (uint64_t)((1000 - 100 * std::min((uint)10, lvlFreddy)) / 60 / 0.005); // number of frames converted to gameticks
+            freddyWait = gameTicks + wait;
+        }
+    }
+    if(gameTicks == freddyWait) {
+        move(graphFreddy, &posFreddy, &rightDoorClosed);
+        freddyWait = 0;
+    }
+
+    return TIMER_CONTINUE;
 }
-
-int tickFreddy() {
-	if(bounded_rand(20) + 1 <= lvlFreddy && currentCam != posFreddy) {move(graphFreddy, &posFreddy, &rightDoorClosed);}
-
-	return TIMER_CONTINUE;
-}
-
-int animatTimer = timer_configure(TIMER_ANY, 5*1000*1000, GINT_CALL(tickAnimatronics));
-int freddyTimer = timer_configure(TIMER_ANY, (uint64_t)(3.02*1000*1000), GINT_CALL(tickFreddy));
 
 int main(void)
 {
-	int seed = rtc_ticks();
+	uint seed = rtc_ticks();
 	srand(seed);
 	dclear(C_WHITE);
 	dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
 	dprint(1, 9, C_BLACK, "Chica: %d", posChica);
 	dprint(1, 17, C_BLACK, "Freddy: %d", posFreddy);
 	dupdate();
-	timer_start(animatTimer);
-	timer_start(freddyTimer);
+
+    int animatronic_timer = timer_configure(TIMER_ANY, (uint64_t)(0.005*1000*1000), GINT_CALL(tickAll)); // 0.005s interval to mantain 0.01s resolution
+    timer_start(animatronic_timer);
+
 	while(1) {
 		clearevents();
 		if (keydown(KEY_EXIT))
@@ -156,15 +172,23 @@ int main(void)
 		dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
 		dprint(1, 9, C_BLACK, "Chica: %d", posChica);
 		dprint(1, 17, C_BLACK, "Freddy: %d", posFreddy);
+        dprint(1, 17+8, C_BLACK, "gt: %llu", (unsigned long long)gameTicks);
+        dprint(1, 17+8*2, C_BLACK, "fw: %llu", (unsigned long long)freddyWait);
 
 		if(dead) {
 			dclear(C_WHITE);
 			dprint(1, 1, C_BLACK, "DEAD");
-			timer_stop(animatTimer);
-			timer_stop(freddyTimer);
+            dupdate();
+			timer_stop(animatronic_timer);
+            break;
 		}
-		
+
 		dupdate();
 	}
+
+    if(dead) {
+        getkey();
+    }
+
 	return 0;
 }
