@@ -55,9 +55,9 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphBonny = {{
     /* CAM_6 */  {CAM_COUNT, CAM_COUNT},
     /* CAM_7 */  {CAM_COUNT, CAM_COUNT}
 }};
-Cam posBonny = CAM_1A;
-uint lvlBonny = 20; // 20 for testing purposes
-uint ticksBonny = (uint)(4.97/0.005);
+const uint ticksBonny = (uint)(4.97/0.01);
+Cam posBonny;
+uint lvlBonny;
 
 constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphChica = {{
     /* OFFICE */ {CAM_4A, CAM_COUNT},
@@ -75,9 +75,9 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphChica = {{
     /* CAM_6 */  {CAM_7, CAM_4A},
     /* CAM_7 */  {CAM_6, CAM_4A}
 }};
-Cam posChica = CAM_1A;
-uint lvlChica = 20; // 20 for testing purposes
-uint ticksChica = (uint)(4.98/0.005);
+const uint ticksChica = (uint)(4.98/0.01);
+Cam posChica;
+uint lvlChica;
 
 constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphFreddy = {{
     /* OFFICE */ {CAM_4A, CAM_COUNT},
@@ -95,17 +95,26 @@ constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphFreddy = {{
     /* CAM_6 */  {CAM_4A, CAM_4A},
     /* CAM_7 */  {CAM_6, CAM_6}
 }};
-Cam posFreddy = CAM_1A;
-uint lvlFreddy = 20; // 20 for testing purposes
-uint ticksFreddy = (uint)(3.02/0.005);
+const uint ticksFreddy = (uint)(3.02/0.01);
+Cam posFreddy;
+uint lvlFreddy;
+uint64_t freddyWait;
+
+const uint ticksFoxy = (uint)(5.01/0.01);
+uint foxyStage;
+bool foxyLocked;
+uint64_t foxyLockWait;
+uint lvlFoxy;
+uint64_t foxyWait;
 
 
-bool leftDoorClosed = false;
-bool rightDoorClosed = false;
-bool dead = false;
-Cam currentCam = OFFICE;
-uint64_t gameTicks = 0;
-uint64_t freddyWait = 0;
+bool leftDoorClosed;
+bool rightDoorClosed;
+bool dead;
+Cam currentCam;
+uint64_t gameTicks;
+int animatronic_timer;
+uint hour;
 
 
 void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos, bool* door) {
@@ -128,6 +137,14 @@ void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos
 int tickAll() {
     gameTicks += 1;
 
+    if(currentCam != OFFICE) {
+        foxyLocked = true;
+        foxyLockWait = 0;
+    }
+    if(currentCam == OFFICE && foxyLockWait == 0 && foxyLocked) {
+        foxyLockWait = gameTicks + (uint64_t)((bounded_rand(1667+1-83)+83)/100/0.01);
+    }
+
     if(gameTicks % ticksBonny == 0) {
         if(bounded_rand(20) + 1 <= lvlBonny) {move(graphBonny, &posBonny, &leftDoorClosed);}
     }
@@ -136,30 +153,112 @@ int tickAll() {
     }
     if(gameTicks % ticksFreddy == 0) {
         if(bounded_rand(20) + 1 <= lvlFreddy && currentCam != posFreddy && freddyWait == 0) {
-            uint64_t wait = (uint64_t)((1000 - 100 * std::min((uint)10, lvlFreddy)) / 60 / 0.005); // number of frames converted to gameticks
+            uint64_t wait = (uint64_t)((1000 - 100 * std::min((uint)10, lvlFreddy)) / 60 / 0.01); // number of frames converted to gameticks
             freddyWait = gameTicks + wait;
         }
     }
+    if(gameTicks % ticksFoxy == 0) {
+        if(bounded_rand(20) + 1 <= lvlFoxy && !foxyLocked && foxyStage <= 3) {
+            foxyStage += 1;
+        }
+        if(foxyStage == 4 && foxyWait == 0) {
+            foxyWait = gameTicks + (uint64_t)(25/0.01);
+        }
+    }
+
     if(gameTicks == freddyWait) {
         move(graphFreddy, &posFreddy, &rightDoorClosed);
         freddyWait = 0;
     }
+    if(gameTicks == foxyWait || (foxyStage > 3 && foxyWait == 0)) {
+        // executes when foxy is dashing
+        foxyWait = 0;
+        foxyStage += 1;
+        if(foxyStage == 5 || foxyStage == 6) {
+            // play foxy rdashing animation
+            foxyWait = gameTicks + (uint64_t)(1.5/0.01);
+        }
+        if(foxyStage == 7) {
+            if(leftDoorClosed) { foxyStage = 0; }
+            else { dead = true; }
+        }
+    }
+    if(gameTicks == foxyLockWait) {
+        foxyLockWait = 0;
+        foxyLocked = false;
+    }
 
+    if(gameTicks == (1*60+30)/0.01) { // 1AM
+        hour = 1;
+    }
+    if(gameTicks == (1*60+30+(1*60+29)*1)/0.01) { // 2AM
+        hour = 2;
+    }
+    if(gameTicks == (1*60+30+(1*60+29)*2)/0.01) { // 3AM
+        hour = 3;
+    }
+    if(gameTicks == (1*60+30+(1*60+29)*3)/0.01) { // 4AM
+        hour = 4;
+    }
+    if(gameTicks == (1*60+30+(1*60+29)*4)/0.01) { // 5AM
+        hour = 5;
+    }
+    if(gameTicks == (1*60+30+(1*60+29)*5)/0.01) { // 6AM
+        hour = 6;
+    }
+
+    if(dead || hour == 6) {
+        return TIMER_STOP;
+    }
     return TIMER_CONTINUE;
+}
+
+void printData() {
+    dclear(C_WHITE);
+	dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
+	dprint(1, 1+8, C_BLACK, "Chica: %d", posChica);
+	dprint(1, 1+8*2, C_BLACK, "Freddy: %d", posFreddy);
+    dprint(1, 1+8*3, C_BLACK, "Foxy stage: %d", foxyStage);
+    dprint(1, 1+8*4, C_BLACK, "Hour: %dAM", hour);
+    dupdate();
+}
+
+void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL) {
+    // reset global values
+    leftDoorClosed = false;
+    rightDoorClosed = false;
+    dead = false;
+    currentCam = OFFICE;
+    gameTicks = 0;
+    animatronic_timer = -1;
+    hour = 12;
+
+    // reset animatronic values
+    posBonny = CAM_1A;
+    posChica = CAM_1A;
+    posFreddy = CAM_1A;
+    freddyWait = 0;
+    foxyStage = 0;
+    foxyLocked = false;
+    foxyLockWait = 0;
+    foxyWait = 0;
+
+    // set correct ai levels
+    lvlBonny = bonnyLVL;
+    lvlChica = chicaLVL;
+    lvlFreddy = freddyLVL;
+    lvlFoxy = foxyLVL;
+
+    uint seed = rtc_ticks();
+	srand(seed);
+
+    int animatronic_timer = timer_configure(TIMER_ANY, (uint64_t)(0.01*1000*1000), GINT_CALL(tickAll));
+    timer_start(animatronic_timer);
 }
 
 int main(void)
 {
-	uint seed = rtc_ticks();
-	srand(seed);
-	dclear(C_WHITE);
-	dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
-	dprint(1, 9, C_BLACK, "Chica: %d", posChica);
-	dprint(1, 17, C_BLACK, "Freddy: %d", posFreddy);
-	dupdate();
-
-    int animatronic_timer = timer_configure(TIMER_ANY, (uint64_t)(0.005*1000*1000), GINT_CALL(tickAll)); // 0.005s interval to mantain 0.01s resolution
-    timer_start(animatronic_timer);
+    startCustomNight(0, 0, 0, 0);
 
 	while(1) {
 		clearevents();
@@ -168,27 +267,31 @@ int main(void)
 			break;
 		}
 		
-		dclear(C_WHITE);
-		dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
-		dprint(1, 9, C_BLACK, "Chica: %d", posChica);
-		dprint(1, 17, C_BLACK, "Freddy: %d", posFreddy);
-        dprint(1, 17+8, C_BLACK, "gt: %llu", (unsigned long long)gameTicks);
-        dprint(1, 17+8*2, C_BLACK, "fw: %llu", (unsigned long long)freddyWait);
+        printData();
 
+        // death logic instead of a function call
 		if(dead) {
 			dclear(C_WHITE);
 			dprint(1, 1, C_BLACK, "DEAD");
             dupdate();
-			timer_stop(animatronic_timer);
+            timer_stop(animatronic_timer);
+            break;
+		}
+
+        if(hour == 6) {
+			dclear(C_WHITE);
+			dprint(1, 1, C_BLACK, "WIN");
+            dupdate();
+            timer_stop(animatronic_timer);
             break;
 		}
 
 		dupdate();
 	}
 
-    if(dead) {
+    if(dead || hour == 6) {
         getkey();
     }
 
-	return 0;
+	return 1;
 }
