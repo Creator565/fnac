@@ -1,0 +1,99 @@
+office_base.png:
+  type: bopti-image
+  name: imgOfficeBase
+  profile: mono
+
+office_left_door.png:
+  type: bopti-image
+  name: imgOfficeLeftDoor
+  profile: mono_alpha
+
+office_right_door.png:
+  type: bopti-image
+  name: imgOfficeRightDoor
+  profile: mono_alpha
+
+office_left_light.png:
+  type: bopti-image
+  name: imgOfficeLeftLight
+  profile: mono_alpha
+
+office_right_light.png:
+  type: bopti-image
+  name: imgOfficeRightLight
+  profile: mono_alpha
+
+1A_base.png:
+  type: bopti-image
+  name: img1ABase
+  profile: mono
+
+1B_base.png:
+  type: bopti-image
+  name: img1BBase
+  profile: mono
+
+1C_0.png:
+  type: bopti-image
+  name: img1C0
+  profile: mono
+
+1C_1.png:
+  type: bopti-image
+  name: img1C1
+  profile: mono
+
+1C_2.png:
+  type: bopti-image
+  name: img1C2
+  profile: mono
+
+1C_3.png:
+  type: bopti-image
+  name: img1C3
+  profile: mono
+
+2A_base.png:
+  type: bopti-image
+  name: img2ABase
+  profile: mono
+
+2B_base.png:
+  type: bopti-image
+  name: img2BBase
+  profile: mono
+
+3_base.png:
+  type: bopti-image
+  name: img3Base
+  profile: mono
+
+3_light.png:
+  type: bopti-image
+  name: img3Light
+  profile: mono_alpha
+
+4A_base.png:
+  type: bopti-image
+  name: img4ABase
+  profile: mono
+
+4A_cables.png:
+  type: bopti-image
+  name: img4ACables
+  profile: mono_alpha
+
+4B_base.png:
+  type: bopti-image
+  name: img4BBase
+  profile: mono
+
+5_base.png:
+  type: bopti-image
+  name: img5Base
+  profile: mono
+
+7_base.png:
+  type: bopti-image
+  name: img7Base
+  profile: mono

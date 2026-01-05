@@ -14,14 +14,12 @@ set(SOURCES
   src/main.cpp
   # ...
 )
-set(ASSETS_fx
-  # ...
-)
-set(ASSETS_cg
-  # ...
-)
+file(GLOB CAMS "assets/cams/*.png")
+file(GLOB ANIMATRONICS "assets/animatronics/*.png")
+list(APPEND ASSETS ${CAMS})
+list(APPEND ASSETS ${ANIMATRONICS})
 
-fxconv_declare_assets(${ASSETS} ${ASSETS_fx} ${ASSETS_cg} WITH_METADATA)
+fxconv_declare_assets(${ASSETS} WITH_METADATA)
 
 add_library(tinymt32 STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/tinymt32/tinymt32.c
@@ -37,7 +35,7 @@ target_link_libraries(fnac Gint::Gint tinymt32 -lstdc++)
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   generate_g1a(TARGET fnac OUTPUT "fnac.g1a"
-    NAME "fnac" ICON assets-fx/icon.png)
+    NAME "fnac" ICON assets/icon.png)
 elseif("${FXSDK_PLATFORM_LONG}" STREQUAL fxCP)
   generate_hh2_bin(TARGET fnac OUTPUT "fnac-hh2.bin")
 endif()

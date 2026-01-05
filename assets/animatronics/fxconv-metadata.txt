@@ -1,0 +1,99 @@
+1A_bonny.png:
+  type: bopti-image
+  name: img1ABonny
+  profile: mono_alpha
+
+1A_chica.png:
+  type: bopti-image
+  name: img1AChica
+  profile: mono_alpha
+
+1A_freddy.png:
+  type: bopti-image
+  name: img1AFreddy
+  profile: mono_alpha
+
+office_bonny.png:
+  type: bopti-image
+  name: imgOfficeBonny
+  profile: mono_alpha
+
+office_chica.png:
+  type: bopti-image
+  name: imgOfficeChica
+  profile: mono_alpha
+
+1B_bonny.png:
+  type: bopti-image
+  name: img1BBonny
+  profile: mono_alpha
+
+1B_chica.png:
+  type: bopti-image
+  name: img1BChica
+  profile: mono_alpha
+
+1B_freddy.png:
+  type: bopti-image
+  name: img1BFreddy
+  profile: mono_alpha
+
+2A_bonny.png:
+  type: bopti-image
+  name: img2ABonny
+  profile: mono_alpha
+
+2A_foxy_4.png:
+  type: bopti-image
+  name: img2AFoxy4
+  profile: mono_alpha
+
+2A_foxy_5.png:
+  type: bopti-image
+  name: img2AFoxy5
+  profile: mono_alpha
+
+2B_bonny.png:
+  type: bopti-image
+  name: img2BBonny
+  profile: mono_alpha
+
+3_bonny.png:
+  type: bopti-image
+  name: img3Bonny
+  profile: mono_alpha
+
+4A_chica.png:
+  type: bopti-image
+  name: img4AChica
+  profile: mono_alpha
+
+4A_freddy.png:
+  type: bopti-image
+  name: img4AFreddy
+  profile: mono_alpha
+
+4B_chica.png:
+  type: bopti-image
+  name: img4BChica
+  profile: mono_alpha
+
+4B_freddy.png:
+  type: bopti-image
+  name: img4BFreddy
+  profile: mono_alpha
+
+5_bonny.png:
+  type: bopti-image
+  name: img5Bonny
+  profile: mono_alpha
+
+7_chica.png:
+  type: bopti-image
+  name: img7Chica
+  profile: mono_alpha
+
+7_freddy.png:
+  type: bopti-image
+  name: img7Freddy
+  profile: mono_alpha

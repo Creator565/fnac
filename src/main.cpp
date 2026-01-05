@@ -1,24 +1,13 @@
 #include <gint/keyboard.h>
 #include <gint/display.h>
-#include <gint/display-fx.h>
 #include <gint/keycodes.h>
-#include <gint/clock.h>
 #include <gint/timer.h>
 #include <gint/rtc.h>
-#include <gint/gint.h>
 #include <array>
 #include <rand.h>
 #include <cstdint>
+#include "img.h"
 
-/// @brief Mostly unbiased random number generation withing range
-/// @param range maximum value + 1
-/// @return Random int between 0 and range-1
-unsigned bounded_rand(unsigned range)
-{
-    for (unsigned x, r;;)
-        if (x = rand(), r = x % range, x - r <= -range)
-            return r;
-}
 
 enum Cam : uint8_t {
     OFFICE,
@@ -37,6 +26,27 @@ enum Cam : uint8_t {
     CAM_7,
 	CAM_COUNT
 };
+
+char* camToStr(Cam cam) {
+    switch (cam) 
+    {
+        case OFFICE: return "OFFICE";
+	    case LEFT_DOOR: return "YOUR NOT SUPPOSED TO BE HERE";
+	    case RIGHT_DOOR: return "YOUR NOT SUPPOSED TO BE HERE";
+        case CAM_1A: return "1A";
+        case CAM_1B: return "1B";
+        case CAM_1C: return "1C";
+        case CAM_2A: return "2A";
+        case CAM_2B: return "2B";
+        case CAM_3: return "3";
+	    case CAM_4A: return "4A";
+        case CAM_4B: return "4B";
+        case CAM_5: return "5";
+        case CAM_6: return "6";
+        case CAM_7: return "7";
+	    case CAM_COUNT: return "YOUR NOT SUPPOSED TO BE HERE";
+    }
+}
 
 // expects the 0th element of OFFICE to be the location they go back to if the office door is closed
 constexpr std::array<std::array<Cam, 2>, CAM_COUNT> graphBonny = {{
@@ -122,21 +132,150 @@ uint hour;
 uint powerUsage;
 uint powerLeft;
 uint actionWait;
+bool invuln;
 
+
+void drawCam(Cam cam) {
+    switch (cam)
+    {
+        case OFFICE: {
+            dimage(0, 0, &imgOfficeBase);
+            if(leftLightOn) { dimage(0, 0, &imgOfficeLeftLight); }
+            if(rightLightOn) { dimage(0, 0, &imgOfficeRightLight); }
+            if(posBonny == LEFT_DOOR && leftLightOn) { dimage(0, 0, &imgOfficeBonny); }
+            if(posChica == RIGHT_DOOR && rightLightOn) { dimage(0, 0, &imgOfficeChica); }
+            if(leftDoorClosed) { dimage(0, 0, &imgOfficeLeftDoor); }
+            if(rightDoorClosed) { dimage(0, 0, &imgOfficeRightDoor); }
+            dprint_opt(105, 1, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%dAM", hour);
+            dprint_opt(19, 1, C_WHITE, C_NONE, DTEXT_LEFT, DTEXT_TOP, "%d%", powerLeft);
+            char hashes[powerUsage + 1]; // +1 for null terminator
+            for (uint i = 0; i < powerUsage; i++) {
+                hashes[i] = '#';
+            }
+            hashes[powerUsage] = '\0'; // null-terminate
+            dprint_opt(37, 1, C_WHITE, C_NONE, DTEXT_LEFT, DTEXT_TOP, "%s", hashes);
+            break;
+        }
+        
+        case CAM_1A: {
+            dimage(0, 0, &img1ABase);
+            if(posChica == CAM_1A) { dimage(0, 0, &img1AChica); }
+            if(posBonny == CAM_1A) { dimage(0, 0, &img1ABonny); }
+            if(posFreddy == CAM_1A) { dimage(0, 0, &img1AFreddy); }
+            break;
+        }
+
+        case CAM_1B: {
+            dimage(0, 0, &img1BBase);
+            if(posBonny == CAM_1B) { dimage(0, 0, &img1BBonny); }
+            if(posChica == CAM_1B) { dimage(0, 0, &img1BChica); }
+            if(posFreddy == CAM_1B) { dimage(0, 0, &img1BFreddy); }
+            break;
+        }
+
+        case CAM_1C: {
+            if(foxyStage == 0) { dimage(0, 0, &img1C0); }
+            if(foxyStage == 1) { dimage(0, 0, &img1C1); }
+            if(foxyStage == 2) { dimage(0, 0, &img1C2); }
+            if(foxyStage == 3) { dimage(0, 0, &img1C3); }
+            break;
+        }
+
+        case CAM_2A: {
+            dimage(0, 0, &img2ABase);
+            if(posBonny == CAM_2A) { dimage(0, 0, &img2ABonny); }
+            if(foxyStage == 4) { dimage(0, 0, &img2AFoxy4); }
+            if(foxyStage == 5) { dimage(0, 0, &img2AFoxy5); }
+            break;
+        }
+
+        case CAM_2B: {
+            dimage(0, 0, &img2BBase);
+            if(posBonny == CAM_2B) { dimage(0, 0, &img2BBonny); }
+            break;
+        }
+
+        case CAM_3: {
+            dimage(0, 0, &img3Base);
+            if(posBonny == CAM_3) { dimage(0, 0, &img3Bonny); }
+            dimage(0, 0, &img3Light);
+            break;
+        }
+
+        case CAM_4A: {
+            dimage(0, 0, &img4ABase);
+            if(posChica == CAM_4A) { dimage(0, 0, &img4AChica); }
+            if(posFreddy == CAM_4A) { dimage(0, 0, &img4AFreddy); }
+            dimage(0, 0, &img4ACables);
+            break;
+        }
+
+        case CAM_4B: {
+            dimage(0, 0, &img4BBase);
+            if(posChica == CAM_4B) { dimage(0, 0, &img4BChica); }
+            if(posFreddy == CAM_4B) { dimage(0, 0, &img4BFreddy); }
+            break;
+        }
+
+        case CAM_5: {
+            dimage(0, 0, &img5Base);
+            if(posBonny == CAM_5) { dimage(0, 0, &img5Bonny); }
+            break;
+        }
+
+        case CAM_6: {
+            dclear(C_BLACK);
+            dprint_opt(64, 14, C_INVERT, C_NONE, DTEXT_CENTER, DTEXT_TOP, "-CAMERA DISABLED-");
+            break;
+        }
+
+        case CAM_7: {
+            dimage(0, 0, &img7Base);
+            if(posChica == CAM_7) { dimage(0, 0, &img7Chica); }
+            if(posFreddy == CAM_7) { dimage(0, 0, &img7Freddy); }
+            break;
+        }
+    }
+
+    if(cam != OFFICE) {
+        dprint(5, 5, C_INVERT, camToStr(currentCam));
+    }
+}
 
 void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos, bool* door) {
 	int chosen = bounded_rand(2);
 	Cam posNext = graph[*currentPos][chosen];
 	if(posNext == OFFICE) {
-		if(*door) {
+		if(*door || invuln) {
 			*currentPos = graph[OFFICE][0];
+            if(currentCam == OFFICE) {
+                drawCam(OFFICE);
+            }
+            if(currentCam == *currentPos) {
+                drawCam(*currentPos);
+            }
 		}
 		else {
 			dead = true;
 		}
 	}
 	else {
-		*currentPos = posNext;
+        if(currentCam == *currentPos) {
+            Cam temp = *currentPos;
+            *currentPos = posNext;
+            drawCam(temp);
+        }
+        else if(currentCam == posNext) {
+            *currentPos = posNext;
+            drawCam(*currentPos);
+        }
+        else if(( posNext == LEFT_DOOR || posNext == RIGHT_DOOR ) && currentCam == OFFICE) {
+            *currentPos = posNext;
+            drawCam(OFFICE);
+        }
+        else {
+            *currentPos = posNext;
+        }
 	}
 	return;
 }
@@ -148,6 +287,9 @@ int tickAll() {
         powerLeft -= 1;
         if(powerLeft == 0) {
             dead = true;
+        }
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
         }
     }
 
@@ -163,11 +305,34 @@ int tickAll() {
             freddyWait = gameTicks + wait;
         }
     }
+     if(gameTicks == foxyWait || (foxyStage > 2 && foxyWait == 0)) {
+        // executes when foxy is dashing
+        foxyWait = 0;
+        foxyStage += 1;
+        if(foxyStage == 4 || foxyStage == 5) {
+            // play foxy dashing animation
+            if(currentCam == CAM_2A) {
+                drawCam(CAM_2A);
+            }
+            foxyWait = gameTicks + (uint64_t)(1.6/0.01);
+        }
+        if(foxyStage == 6) {
+            if(currentCam == CAM_2A) {
+                drawCam(CAM_2A);
+            }
+            if(leftDoorClosed || invuln) { 
+                foxyStage = 0;
+                powerLeft -= foxyPowerDrain;
+                foxyPowerDrain += 5;
+             }
+            else { dead = true; }
+        }
+    }
     if(gameTicks % ticksFoxy == 0) {
-        if(bounded_rand(20) + 1 <= lvlFoxy && !foxyLocked && foxyStage <= 3) {
+        if(bounded_rand(20) + 1 <= lvlFoxy && !foxyLocked && foxyStage <= 2) {
             foxyStage += 1;
         }
-        if(foxyStage == 4 && foxyWait == 0) {
+        if(foxyStage == 3 && foxyWait == 0) {
             foxyWait = gameTicks + (uint64_t)(25/0.01);
         }
     }
@@ -176,23 +341,6 @@ int tickAll() {
         move(graphFreddy, &posFreddy, &rightDoorClosed);
         freddyWait = 0;
     }
-    if(gameTicks == foxyWait || (foxyStage > 3 && foxyWait == 0)) {
-        // executes when foxy is dashing
-        foxyWait = 0;
-        foxyStage += 1;
-        if(foxyStage == 5 || foxyStage == 6) {
-            // play foxy rdashing animation
-            foxyWait = gameTicks + (uint64_t)(1.5/0.01);
-        }
-        if(foxyStage == 7) {
-            if(leftDoorClosed) { 
-                foxyStage = 0;
-                powerLeft -= foxyPowerDrain;
-                foxyPowerDrain += 5;
-             }
-            else { dead = true; }
-        }
-    }
     if(gameTicks == foxyLockWait) {
         foxyLockWait = 0;
         foxyLocked = false;
@@ -200,21 +348,46 @@ int tickAll() {
 
     if(gameTicks == (1*60+30)/0.01) { // 1AM
         hour = 1;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
     if(gameTicks == (1*60+30+(1*60+29)*1)/0.01) { // 2AM
         hour = 2;
+        lvlBonny += 1;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
     if(gameTicks == (1*60+30+(1*60+29)*2)/0.01) { // 3AM
         hour = 3;
+        lvlBonny += 1;
+        lvlChica += 1;
+        lvlFoxy += 1;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
     if(gameTicks == (1*60+30+(1*60+29)*3)/0.01) { // 4AM
         hour = 4;
+        lvlBonny += 1;
+        lvlChica += 1;
+        lvlFoxy += 1;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
     if(gameTicks == (1*60+30+(1*60+29)*4)/0.01) { // 5AM
         hour = 5;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
     if(gameTicks == (1*60+30+(1*60+29)*5)/0.01) { // 6AM
         hour = 6;
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
     }
 
     if(dead || hour == 6) {
@@ -236,7 +409,8 @@ void printData() {
     dupdate();
 }
 
-void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL, float powerDrainTime) {
+
+void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL, float powerDrainTime = 3) {
     // reset global values
     leftDoorClosed = false;
     rightDoorClosed = false;
@@ -274,6 +448,7 @@ void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL
 
     int animatronic_timer = timer_configure(TIMER_ANY, (uint64_t)(0.01*1000*1000), GINT_CALL(tickAll));
     timer_start(animatronic_timer);
+    drawCam(OFFICE);
 }
 
 void switchCamera(Cam newCam) {
@@ -283,7 +458,7 @@ void switchCamera(Cam newCam) {
     if(newCam != OFFICE) {
         foxyLocked = true;
         foxyLockWait = 0;
-        if(foxyStage == 4 && ( newCam == CAM_1C || newCam == CAM_2A )) {
+        if(foxyStage == 3 && ( newCam == CAM_1C || newCam == CAM_2A )) {
             foxyWait = 0;
         }
     }
@@ -293,9 +468,9 @@ void switchCamera(Cam newCam) {
         }
     }
 
-    // drawing code for the cam goes here
-
     currentCam = newCam;
+    drawCam(currentCam);
+
     actionWait = 10;
     return;
 }
@@ -312,7 +487,8 @@ void switchDoor(int door) {
         if(rightDoorClosed) {powerUsage += 1;}
         else {powerUsage -= 1;}
     }
-    actionWait = 90;
+    drawCam(OFFICE);
+    actionWait = 64;
 }
 
 /// @param light 0 is for the left light and 1 is for the right one
@@ -327,14 +503,37 @@ void switchLight(int light) {
         if(rightLightOn) {powerUsage += 1;}
         else {powerUsage -= 1;}
     }
-    actionWait = 90;
+    drawCam(OFFICE);
+    actionWait = 32;
+}
+
+void startNight(int night) {
+    if(night == 1) {
+        startCustomNight(0, 0, 0, 0, 9.6);
+    }
+    else if(night == 2) {
+        startCustomNight(3, 1, 1, 0, 6);
+    }
+    else if(night == 3) {
+        startCustomNight(0, 5, 2, 1, 5);
+    }
+    else if(night == 4) {
+        startCustomNight(2, 4, 6, bounded_rand(2) + 1, 4);
+    }
+    else if(night == 5) {
+        startCustomNight(5, 7, 5, 3, 4);
+    }
+    else if(night == 6) {
+        startCustomNight(10, 12, 16, 4);
+    }
 }
 
 
 int main(void)
 {
-    startCustomNight(0, 0, 0, 0, 9.6);
-
+    startCustomNight(20, 20, 20, 20, 100);
+    uint ticks = rtc_ticks();
+    invuln = true; // debug
 	while(1) {
 		clearevents();
 		if(keydown(KEY_EXIT)) { break; }
@@ -372,7 +571,7 @@ int main(void)
             }
         }
 
-        printData();
+        // printData();
 
         // death logic instead of a function call
 		if(dead) {
@@ -391,8 +590,9 @@ int main(void)
             break;
 		}
 
-        if(actionWait > 0) {
+        if(rtc_ticks() - ticks >= 1 && actionWait > 0) {
             actionWait -= 1;
+            ticks = rtc_ticks();
         }
 
 		dupdate();

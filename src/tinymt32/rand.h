@@ -19,6 +19,11 @@ void srand(unsigned int seed);
  */
 int rand(void);
 
+/// @brief Mostly unbiased random number generation within 0 and range-1
+/// @param range maximum value + 1
+/// @return Random int between 0 and range-1
+unsigned bounded_rand(unsigned range);
+
 #ifdef __cplusplus
 }
 #endif
