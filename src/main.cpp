@@ -401,6 +401,16 @@ int tickAll() {
             powerLeft -= 1;
         }
         if(powerLeft == 0) {
+            leftDoorClosed = false;
+            rightDoorClosed = false;
+            leftLightOn = false;
+            rightLightOn = false;
+            drawCam(OFFICE);
+            dimage(0, 0, &imgBlackout);
+            dupdate();
+            sleep_ms(4000);
+            dimage(0, 0, &imgFreddyBlackoutJumpscare);
+            dupdate();
             dead = true;
         }
         if(currentCam == OFFICE) {
@@ -410,9 +420,27 @@ int tickAll() {
 
     if(gameTicks % ticksBonny == 0) {
         if(bounded_rand(20) + 1 <= lvlBonny) {move(graphBonny, &posBonny, &leftDoorClosed);}
+        if(dead) {
+            leftDoorClosed = false;
+            rightDoorClosed = false;
+            leftLightOn = false;
+            rightLightOn = false;
+            drawCam(OFFICE);
+            dimage(0, 0, &imgBonnyJumpscare);
+            dupdate();
+        }
     }
     if(gameTicks % ticksChica == 0) {
         if(bounded_rand(20) + 1 <= lvlChica) {move(graphChica, &posChica, &rightDoorClosed);}
+        if(dead) {
+            leftDoorClosed = false;
+            rightDoorClosed = false;
+            leftLightOn = false;
+            rightLightOn = false;
+            drawCam(OFFICE);
+            dimage(0, 0, &imgChicaJumpscare);
+            dupdate();
+        }
     }
     if(gameTicks % ticksFreddy == 0) {
         if(bounded_rand(20) + 1 <= lvlFreddy && currentCam != posFreddy && freddyWait == 0) {
@@ -442,7 +470,16 @@ int tickAll() {
                 }
                 foxyPowerDrain += 5;
              }
-            else { dead = true; }
+            else { 
+                dead = true;
+                leftDoorClosed = false;
+                rightDoorClosed = false;
+                leftLightOn = false;
+                rightLightOn = false;
+                drawCam(OFFICE);
+                dimage(0, 0, &imgFoxyJumpscare);
+                dupdate();
+            }
         }
     }
     if(gameTicks % ticksFoxy == 0) {
@@ -457,6 +494,15 @@ int tickAll() {
     if(gameTicks == freddyWait) {
         move(graphFreddy, &posFreddy, &rightDoorClosed);
         freddyWait = 0;
+        if(dead) {
+            leftDoorClosed = false;
+            rightDoorClosed = false;
+            leftLightOn = false;
+            rightLightOn = false;
+            drawCam(OFFICE);
+            dimage(0, 0, &imgFreddyJumpscare);
+            dupdate();
+        }
     }
     if(gameTicks == foxyLockWait) {
         foxyLockWait = 0;
@@ -589,11 +635,11 @@ bool customNightMenu() {
         dprint_opt(116, 40, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%d", foxyLvl);
         switch (selected)
         {
-            case 0: drect(3, 40, 26, 48, C_INVERT); break;
-            case 1: drect(37, 40, 60, 48, C_INVERT); break;
-            case 2: drect(68, 40, 91, 48, C_INVERT); break;
-            case 3: drect(101, 40, 123, 47, C_INVERT); break;
-            case 4: drect(88, 53, 118, 62, C_INVERT); break;
+            case 0: drect(3, 40, 25, 47, C_INVERT); break;
+            case 1: drect(37, 40, 59, 47, C_INVERT); break;
+            case 2: drect(68, 40, 90, 47, C_INVERT); break;
+            case 3: drect(101, 40, 122, 47, C_INVERT); break;
+            case 4: drect(88, 53, 116, 61, C_INVERT); break;
         }
         dupdate();
         key_event_t key = getkey();
@@ -821,9 +867,6 @@ int main(void)
 
                 // death logic here instead of in a function call
         		if(dead) {
-        			dclear(C_WHITE);
-        			dprint(1, 1, C_BLACK, "DEAD");
-                    dupdate();
                     timer_stop(animatronic_timer);
                     sleep_ms(2000);
                     break;

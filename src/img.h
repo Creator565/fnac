@@ -41,6 +41,12 @@ extern const bopti_image_t img5Bonny;
 extern const bopti_image_t img7Base;
 extern const bopti_image_t img7Chica;
 extern const bopti_image_t img7Freddy;
+extern const bopti_image_t imgBonnyJumpscare;
+extern const bopti_image_t imgChicaJumpscare;
+extern const bopti_image_t imgFreddyJumpscare;
+extern const bopti_image_t imgFreddyBlackoutJumpscare;
+extern const bopti_image_t imgFoxyJumpscare;
+extern const bopti_image_t imgBlackout;
 
 extern const bopti_image_t imgMenuBase;
 extern const bopti_image_t imgCNMenuBase;

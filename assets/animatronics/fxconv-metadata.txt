@@ -97,3 +97,33 @@ office_chica.png:
   type: bopti-image
   name: img7Freddy
   profile: mono_alpha
+
+bonny_jumpscare.png:
+  type: bopti-image
+  name: imgBonnyJumpscare
+  profile: mono_alpha
+
+chica_jumpscare.png:
+  type: bopti-image
+  name: imgChicaJumpscare
+  profile: mono_alpha
+
+freddy_jumpscare.png:
+  type: bopti-image
+  name: imgFreddyJumpscare
+  profile: mono_alpha
+
+freddy_blackout_jumpscare.png:
+  type: bopti-image
+  name: imgFreddyBlackoutJumpscare
+  profile: mono_alpha
+
+foxy_jumpscare.png:
+  type: bopti-image
+  name: imgFoxyJumpscare
+  profile: mono_alpha
+
+blackout.png:
+  type: bopti-image
+  name: imgBlackout
+  profile: mono_alpha
