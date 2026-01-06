@@ -136,6 +136,7 @@ uint actionWait;
 bool invuln;
 bool infBatt;
 bool infoVision;
+bool stopTimer; // seems like stop_timer is bugged and doesn't stop the timer
 
 
 /// @brief invoke the main menu
@@ -567,7 +568,7 @@ int tickAll() {
         }
     }
 
-    if(dead || hour == 6) {
+    if(dead || hour == 6 || stopTimer) {
         return TIMER_STOP;
     }
     return TIMER_CONTINUE;
@@ -608,6 +609,7 @@ void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL
     leftLightOn = false;
     rightLightOn = false;
     actionWait = 0;
+    stopTimer = false;
 
     // reset animatronic values
     posBonny = CAM_1A;
@@ -858,7 +860,7 @@ int main(void)
             uint ticks = rtc_ticks();
         	while(true) {
         		clearevents();
-        		if(keydown(KEY_EXIT) || keydown(KEY_MENU)) { break; }
+        		if(keydown(KEY_EXIT) || keydown(KEY_MENU)) { timer_stop(animatronic_timer); stopTimer = true; break; }
             
                 if(actionWait == 0) {
             if((currentCam == OFFICE)) {
@@ -898,12 +900,15 @@ int main(void)
                 // death logic here instead of in a function call
         		if(dead) {
                     timer_stop(animatronic_timer);
+                    stopTimer = true;
+
                     sleep_ms(2000);
                     break;
         		}
 
                 if(hour == 6) {
                     timer_stop(animatronic_timer);
+                    stopTimer = true;
 
         			dclear(C_BLACK);
         			dtext_opt(64, 32, C_WHITE, C_NONE, DTEXT_CENTER, DTEXT_MIDDLE, "6:00AM");
