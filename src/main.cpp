@@ -169,7 +169,8 @@ int mainMenu() {
                 case 0: { // night selection screen
                     int nightSelected = 0;
                     while(true) {
-                        dimage(0, 0, &imgMenuBase);
+                        dclear(C_BLACK);
+                        dimage(56, 0, &imgMenuBase);
                         dtext(8, 2+8*0, C_WHITE, "Night 1");
                         dtext(8, 2+8*1, C_WHITE, "Night 2");
                         dtext(8, 2+8*2, C_WHITE, "Night 3");
@@ -200,7 +201,8 @@ int mainMenu() {
                 case 1: { // extras menu
                     int optionSelected = 0;
                     while(true) {
-                        dimage(0, 0, &imgMenuBase);
+                        dclear(C_BLACK);
+                        dimage(56, 0, &imgMenuBase);
                         dprint(6, 4+9*0, C_WHITE, "Invuln %s", invuln ? "#" : "");
                         dprint(6, 4+9*1, C_WHITE, "InfBatt %s", infBatt ? "#" : "");
                         dprint(6, 4+9*2, C_WHITE, "InfoVis %s", infoVision ? "#" : "");
@@ -821,9 +823,25 @@ void startNight(int night) {
     }
 }
 
+void showControls() {
+    dclear(C_BLACK);
+    dtext(1, 1, C_WHITE, "Arrow keys for menus");
+    dtext(1, 1+8, C_WHITE, "EXE to confirm");
+    dtext(1, 1+8*2, C_WHITE, "+/- for doors");
+    dtext(1, 1+8*3, C_WHITE, "x/divide for lights");
+    dtext(1, 1+8*4, C_WHITE, "1-7 cams (0 office)");
+    dtext(1, 1+8*5, C_WHITE, "A/B/C for 1A/1B/1C etc");
+    dtext(1, 1+8*6, C_WHITE, "Exit/Menu to go back");
+    dtext(1, 1+8*7, C_WHITE, "Anything to continue");
+    dupdate();
+    return;
+}
+
 
 int main(void)
 {
+    showControls();
+    getkey();
     while(true) {
         bool CNAborted = false;
         int choice = mainMenu();
@@ -885,10 +903,13 @@ int main(void)
         		}
 
                 if(hour == 6) {
-        			dclear(C_WHITE);
-        			dprint(1, 1, C_BLACK, "WIN");
-                    dupdate();
                     timer_stop(animatronic_timer);
+
+        			dclear(C_BLACK);
+        			dtext_opt(64, 32, C_WHITE, C_NONE, DTEXT_CENTER, DTEXT_MIDDLE, "6:00AM");
+                    dupdate();
+
+                    getkey();
                     break;
         		}
 
@@ -898,10 +919,6 @@ int main(void)
                 }
 
         	}
-
-            if(hour == 6) {
-                getkey();
-            }
         }
     }
 
