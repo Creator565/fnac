@@ -12,7 +12,11 @@ find_package(Gint 2.9 REQUIRED)
 
 set(SOURCES
   src/main.cpp
-  # ...
+)
+
+set(ASSETS
+  assets/main_menu.png
+  assets/custom_night_menu.png
 )
 file(GLOB CAMS "assets/cams/*.png")
 file(GLOB ANIMATRONICS "assets/animatronics/*.png")

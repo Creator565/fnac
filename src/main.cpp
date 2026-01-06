@@ -2,6 +2,7 @@
 #include <gint/display.h>
 #include <gint/keycodes.h>
 #include <gint/timer.h>
+#include <gint/clock.h>
 #include <gint/rtc.h>
 #include <array>
 #include <rand.h>
@@ -31,8 +32,8 @@ char* camToStr(Cam cam) {
     switch (cam) 
     {
         case OFFICE: return "OFFICE";
-	    case LEFT_DOOR: return "YOUR NOT SUPPOSED TO BE HERE";
-	    case RIGHT_DOOR: return "YOUR NOT SUPPOSED TO BE HERE";
+	    case LEFT_DOOR: return "Left Door";
+	    case RIGHT_DOOR: return "Right Door";
         case CAM_1A: return "1A";
         case CAM_1B: return "1B";
         case CAM_1C: return "1C";
@@ -133,9 +134,118 @@ uint powerUsage;
 uint powerLeft;
 uint actionWait;
 bool invuln;
+bool infBatt;
+bool infoVision;
 
+
+/// @brief invoke the main menu
+/// @return returns 1-6 for starting a night, 0 for starting a custom night and -1 for quitting the game
+int mainMenu() {
+    int selected = 0;
+    while(true) {
+        dimage(0, 0, &imgMenuBase);
+        dtext(8, 1, C_WHITE, "Five");
+        dtext(8, 1+8*1, C_WHITE, "Nights");
+        dtext(8, 1+8*2, C_WHITE, "At");
+        dtext(8, 1+8*3, C_WHITE, "Freddy's");
+
+        dtext(8, 1+8*4+6, C_WHITE, "Start");
+        dtext(8, 1+8*5+6, C_WHITE, "Extras");
+        dtext(8, 1+8*6+6, C_WHITE, "Quit");
+
+        drect(8, 1+8*(4+selected)+6, 8+36, 1+8*(5+selected)+6, C_INVERT);
+        dupdate();
+        key_event_t key = getkey();
+        if(key.key == KEY_UP && selected > 0) {
+            selected -= 1;
+        }
+        else if(key.key == KEY_DOWN && selected < 2) {
+            selected += 1;
+        }
+        else if(key.key == KEY_EXE) {
+            switch (selected)
+            {
+                case 0: { // night selection screen
+                    int nightSelected = 0;
+                    while(true) {
+                        dimage(0, 0, &imgMenuBase);
+                        dtext(8, 2+8*0, C_WHITE, "Night 1");
+                        dtext(8, 2+8*1, C_WHITE, "Night 2");
+                        dtext(8, 2+8*2, C_WHITE, "Night 3");
+                        dtext(8, 2+8*3, C_WHITE, "Night 4");
+                        dtext(8, 2+8*4, C_WHITE, "Night 5");
+                        dtext(8, 2+8*5, C_WHITE, "Night 6");
+                        dtext(8, 2+8*6, C_WHITE, "Night 7");
+
+                        drect(8, 2+8*(nightSelected), 8+42, 2+8*(nightSelected+1), C_INVERT);
+                        dupdate();
+                        key_event_t key = getkey();
+                        if(key.key == KEY_UP && nightSelected > 0) {
+                            nightSelected -= 1;
+                        }
+                        else if(key.key == KEY_DOWN && nightSelected < 6) {
+                            nightSelected += 1;
+                        }
+                        else if(key.key == KEY_EXIT || key.key == KEY_MENU) {
+                            break;
+                        }
+                        else if(key.key == KEY_EXE) {
+                            return (nightSelected+1) % 7; // return 1-6 for normail night and 0 for custom night
+                        }
+                    }
+                    break;
+                }
+
+                case 1: { // extras menu
+                    int optionSelected = 0;
+                    while(true) {
+                        dimage(0, 0, &imgMenuBase);
+                        dprint(6, 4+9*0, C_WHITE, "Invuln %s", invuln ? "#" : "");
+                        dprint(6, 4+9*1, C_WHITE, "InfBatt %s", infBatt ? "#" : "");
+                        dprint(6, 4+9*2, C_WHITE, "InfoVis %s", infoVision ? "#" : "");
+
+                        drect(6, 4+9*(optionSelected), 6+59, 4+9*(optionSelected+1), C_INVERT);
+                        dupdate();
+                        key_event_t key = getkey();
+                        if(key.key == KEY_UP && optionSelected > 0) {
+                            optionSelected -= 1;
+                        }
+                        else if(key.key == KEY_DOWN && optionSelected < 2) {
+                            optionSelected += 1;
+                        }
+                        else if(key.key == KEY_EXIT || key.key == KEY_MENU) {
+                            break;
+                        }
+                        else if(key.key == KEY_EXE) {
+                            switch (optionSelected)
+                            {
+                                case 0: invuln = !invuln; break;
+                                case 1: infBatt = !infBatt; break;
+                                case 2: infoVision = !infoVision; break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            
+                case 2: { // quit game
+                    return -1;
+                }
+            }
+        }
+        else if(key.key == KEY_EXIT  || key.key == KEY_MENU) {
+            return -1;
+        }
+    }
+
+
+    return 0;
+}
 
 void drawCam(Cam cam) {
+    if(infoVision) {
+        return;
+    }
     switch (cam)
     {
         case OFFICE: {
@@ -240,6 +350,9 @@ void drawCam(Cam cam) {
     if(cam != OFFICE) {
         dprint(5, 5, C_INVERT, camToStr(currentCam));
     }
+
+    dupdate();
+    return;
 }
 
 void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos, bool* door) {
@@ -284,7 +397,9 @@ int tickAll() {
     gameTicks += 1;
 
     if(gameTicks % (uint)(ticksBasePower/powerUsage) == 0) {
-        powerLeft -= 1;
+        if(!infBatt) {
+            powerLeft -= 1;
+        }
         if(powerLeft == 0) {
             dead = true;
         }
@@ -322,7 +437,9 @@ int tickAll() {
             }
             if(leftDoorClosed || invuln) { 
                 foxyStage = 0;
-                powerLeft -= foxyPowerDrain;
+                if(!infBatt) {
+                    powerLeft -= foxyPowerDrain;
+                }
                 foxyPowerDrain += 5;
              }
             else { dead = true; }
@@ -398,17 +515,24 @@ int tickAll() {
 
 void printData() {
     dclear(C_WHITE);
-	dprint(1, 1, C_BLACK, "Bonny: %d", posBonny);
-	dprint(1, 1+8, C_BLACK, "Chica: %d", posChica);
-	dprint(1, 1+8*2, C_BLACK, "Freddy: %d", posFreddy);
-    dprint(1, 1+8*3, C_BLACK, "Foxy stage: %d", foxyStage);
+	dprint(1, 1+8*0, C_BLACK, "Bonny: %s", camToStr(posBonny));
+	dprint(1, 1+8*1, C_BLACK, "Chica: %s", camToStr(posChica));
+	dprint(1, 1+8*2, C_BLACK, "Freddy: %s", camToStr(posFreddy));
+    dprint(1, 1+8*3, C_BLACK, "Foxy: %d", foxyStage);
     dprint(1, 1+8*4, C_BLACK, "Hour: %dAM", hour);
     dprint(1, 1+8*5, C_BLACK, "Power: %d", powerLeft);
-    dprint(1, 1+8*6, C_BLACK, "Power Drain: %d", powerUsage);
-    dprint(1, 1+8*7, C_BLACK, "Camera %d", currentCam);
+    dprint(1, 1+8*6, C_BLACK, "Drain: %d", powerUsage);
+    dprint(1, 1+8*7, C_BLACK, "Cam: %s", camToStr(currentCam));
+    dprint(80, 1+8*0, C_BLACK, "GT: %d", gameTicks);
+    dprint(80, 1+8*1, C_BLACK, "AW: %d", actionWait);
+    dprint(80, 1+8*2, C_BLACK, "LDr: %s", leftDoorClosed ? "Yes" : "No");
+    dprint(80, 1+8*3, C_BLACK, "RDr: %s", rightDoorClosed ? "Yes" : "No");
+    dprint(80, 1+8*4, C_BLACK, "LLt: %s", leftLightOn ? "On" : "Off");
+    dprint(80, 1+8*5, C_BLACK, "RLt: %s", rightLightOn ? "On" : "Off");
+    dprint(80, 1+8*6, C_BLACK, "FLk: %s", foxyLocked ? "Yes" : "No");
+    dprint(80, 1+8*7, C_BLACK, "FLkWt: %d", foxyLockWait);
     dupdate();
 }
-
 
 void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL, float powerDrainTime = 3) {
     // reset global values
@@ -449,6 +573,117 @@ void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL
     int animatronic_timer = timer_configure(TIMER_ANY, (uint64_t)(0.01*1000*1000), GINT_CALL(tickAll));
     timer_start(animatronic_timer);
     drawCam(OFFICE);
+}
+
+bool customNightMenu() {
+    int selected = 0;
+    int bonnyLvl = 0;
+    int chicaLvl = 0;
+    int freddyLvl = 0;
+    int foxyLvl = 0;
+    while(true) {
+        dimage(0, 0, &imgCNMenuBase);
+        dprint_opt(19, 40, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%d", freddyLvl);
+        dprint_opt(53, 40, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%d", bonnyLvl);
+        dprint_opt(84, 40, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%d", chicaLvl);
+        dprint_opt(116, 40, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%d", foxyLvl);
+        switch (selected)
+        {
+            case 0: drect(3, 40, 26, 48, C_INVERT); break;
+            case 1: drect(37, 40, 60, 48, C_INVERT); break;
+            case 2: drect(68, 40, 91, 48, C_INVERT); break;
+            case 3: drect(101, 40, 123, 47, C_INVERT); break;
+            case 4: drect(88, 53, 118, 62, C_INVERT); break;
+        }
+        dupdate();
+        key_event_t key = getkey();
+        if(key.key == KEY_LEFT && selected > 0) {
+            selected -= 1;
+        }
+        else if(key.key == KEY_RIGHT && selected < 4) {
+            selected += 1;
+        }
+        else if(key.key == KEY_UP && selected != 4) {
+            switch (selected)
+            {
+                case 0: {
+                    freddyLvl += 1;
+                    if(freddyLvl > 20) {
+                        freddyLvl = 0;
+                    }
+                    break;
+                }
+                case 1: {
+                    bonnyLvl += 1;
+                    if(bonnyLvl > 20) {
+                        bonnyLvl = 0;
+                    }
+                    break;
+                }
+                case 2: {
+                    chicaLvl += 1;
+                    if(chicaLvl > 20) {
+                        chicaLvl = 0;
+                    }
+                    break;
+                }
+                case 3: {
+                    foxyLvl += 1;
+                    if(foxyLvl > 20) {
+                        foxyLvl = 0;
+                    }
+                    break;
+                }
+            }
+        }
+        else if(key.key == KEY_DOWN && selected != 4) {
+            switch (selected)
+            {
+                case 0: {
+                    freddyLvl -= 1;
+                    if(freddyLvl < 0) {
+                        freddyLvl = 20;
+                    }
+                    break;
+                }
+                case 1: {
+                    bonnyLvl -= 1;
+                    if(bonnyLvl < 0) {
+                        bonnyLvl = 20;
+                    }
+                    break;
+                }
+                case 2: {
+                    chicaLvl -= 1;
+                    if(chicaLvl < 0) {
+                        chicaLvl = 20;
+                    }
+                    break;
+                }
+                case 3: {
+                    foxyLvl -= 1;
+                    if(foxyLvl < 0) {
+                        foxyLvl = 20;
+                    }
+                    break;
+                }
+            }
+        }
+        else if(key.key == KEY_EXE) {
+            switch (selected)
+            {
+                case 0: freddyLvl += 1; break;
+                case 1: bonnyLvl += 1; break;
+                case 2: chicaLvl += 1; break;
+                case 3: foxyLvl += 1; break;
+                case 4: startCustomNight(bonnyLvl, chicaLvl, freddyLvl, foxyLvl); return false;
+            }
+        }
+        else if(key.key == KEY_EXIT  || key.key == KEY_MENU) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void switchCamera(Cam newCam) {
@@ -531,14 +766,25 @@ void startNight(int night) {
 
 int main(void)
 {
-    startCustomNight(20, 20, 20, 20, 100);
-    uint ticks = rtc_ticks();
-    invuln = true; // debug
-	while(1) {
-		clearevents();
-		if(keydown(KEY_EXIT)) { break; }
-		
-        if(actionWait == 0) {
+    while(true) {
+        bool CNAborted = false;
+        int choice = mainMenu();
+
+        switch (choice)
+        {
+            case -1: return 0;
+            case 0: CNAborted = customNightMenu(); break;
+            default: startNight(choice); break;
+            
+        }
+
+        if(!CNAborted) { // main game loop
+            uint ticks = rtc_ticks();
+        	while(true) {
+        		clearevents();
+        		if(keydown(KEY_EXIT) || keydown(KEY_MENU)) { break; }
+            
+                if(actionWait == 0) {
             if((currentCam == OFFICE)) {
                 if(keydown(KEY_PLUS)) { switchDoor(0); }
                 if(keydown(KEY_MINUS)) { switchDoor(1); }
@@ -571,36 +817,38 @@ int main(void)
             }
         }
 
-        // printData();
+                if(infoVision) {printData();}
 
-        // death logic instead of a function call
-		if(dead) {
-			dclear(C_WHITE);
-			dprint(1, 1, C_BLACK, "DEAD");
-            dupdate();
-            timer_stop(animatronic_timer);
-            break;
-		}
+                // death logic here instead of in a function call
+        		if(dead) {
+        			dclear(C_WHITE);
+        			dprint(1, 1, C_BLACK, "DEAD");
+                    dupdate();
+                    timer_stop(animatronic_timer);
+                    sleep_ms(2000);
+                    break;
+        		}
 
-        if(hour == 6) {
-			dclear(C_WHITE);
-			dprint(1, 1, C_BLACK, "WIN");
-            dupdate();
-            timer_stop(animatronic_timer);
-            break;
-		}
+                if(hour == 6) {
+        			dclear(C_WHITE);
+        			dprint(1, 1, C_BLACK, "WIN");
+                    dupdate();
+                    timer_stop(animatronic_timer);
+                    break;
+        		}
 
-        if(rtc_ticks() - ticks >= 1 && actionWait > 0) {
-            actionWait -= 1;
-            ticks = rtc_ticks();
+                if(rtc_ticks() - ticks >= 1 && actionWait > 0) {
+                    actionWait -= 1;
+                    ticks = rtc_ticks();
+                }
+
+        	}
+
+            if(hour == 6) {
+                getkey();
+            }
         }
-
-		dupdate();
-	}
-
-    if(dead || hour == 6) {
-        getkey();
     }
 
-	return 1;
+	return 0;
 }

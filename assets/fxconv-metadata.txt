@@ -1,0 +1,9 @@
+main_menu.png:
+  type: bopti-image
+  name: imgMenuBase
+  profile: mono
+
+custom_night_menu.png:
+  type: bopti-image
+  name: imgCNMenuBase
+  profile: mono
