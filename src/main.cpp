@@ -833,7 +833,7 @@ void showControls() {
     dtext(1, 1+8*3, C_WHITE, "x/divide for lights");
     dtext(1, 1+8*4, C_WHITE, "1-7 cams (0 office)");
     dtext(1, 1+8*5, C_WHITE, "A/B/C for 1A/1B/1C etc");
-    dtext(1, 1+8*6, C_WHITE, "Exit/Menu to go back");
+    dtext(1, 1+8*6, C_WHITE, "Menu to go back");
     dtext(1, 1+8*7, C_WHITE, "Anything to continue");
     dupdate();
     return;
@@ -860,7 +860,7 @@ int main(void)
             uint ticks = rtc_ticks();
         	while(true) {
         		clearevents();
-        		if(keydown(KEY_EXIT) || keydown(KEY_MENU)) { timer_stop(animatronic_timer); stopTimer = true; break; }
+        		if(keydown(KEY_MENU)) { timer_stop(animatronic_timer); stopTimer = true; break; }
             
                 if(actionWait == 0) {
             if((currentCam == OFFICE)) {
