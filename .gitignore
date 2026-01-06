@@ -10,3 +10,7 @@ __pycache__/
 *.sublime-project
 *.sublime-workspace
 .vscode
+
+/assets.bck.zip
+/crop.py
+/crop_report.txt

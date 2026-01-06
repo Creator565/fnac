@@ -143,7 +143,8 @@ bool infoVision;
 int mainMenu() {
     int selected = 0;
     while(true) {
-        dimage(0, 0, &imgMenuBase);
+        dclear(C_BLACK);
+        dimage(56, 0, &imgMenuBase);
         dtext(8, 1, C_WHITE, "Five");
         dtext(8, 1+8*1, C_WHITE, "Nights");
         dtext(8, 1+8*2, C_WHITE, "At");
@@ -249,13 +250,14 @@ void drawCam(Cam cam) {
     switch (cam)
     {
         case OFFICE: {
-            dimage(0, 0, &imgOfficeBase);
-            if(leftLightOn) { dimage(0, 0, &imgOfficeLeftLight); }
-            if(rightLightOn) { dimage(0, 0, &imgOfficeRightLight); }
-            if(posBonny == LEFT_DOOR && leftLightOn) { dimage(0, 0, &imgOfficeBonny); }
-            if(posChica == RIGHT_DOOR && rightLightOn) { dimage(0, 0, &imgOfficeChica); }
-            if(leftDoorClosed) { dimage(0, 0, &imgOfficeLeftDoor); }
-            if(rightDoorClosed) { dimage(0, 0, &imgOfficeRightDoor); }
+            dclear(C_BLACK);
+            dimage(6, 0, &imgOfficeBase);
+            if(leftLightOn) { dimage(8, 11, &imgOfficeLeftLight); }
+            if(rightLightOn) { dimage(104, 13, &imgOfficeRightLight); }
+            if(posBonny == LEFT_DOOR && leftLightOn) { dimage(8, 11, &imgOfficeBonny); }
+            if(posChica == RIGHT_DOOR && rightLightOn) { dimage(90, 17, &imgOfficeChica); }
+            if(leftDoorClosed) { dimage(8, 6, &imgOfficeLeftDoor); }
+            if(rightDoorClosed) { dimage(103, 6, &imgOfficeRightDoor); }
             dprint_opt(105, 1, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%dAM", hour);
             dprint_opt(19, 1, C_WHITE, C_NONE, DTEXT_LEFT, DTEXT_TOP, "%d%", powerLeft);
             char hashes[powerUsage + 1]; // +1 for null terminator
@@ -268,68 +270,77 @@ void drawCam(Cam cam) {
         }
         
         case CAM_1A: {
+            dclear(C_BLACK);
             dimage(0, 0, &img1ABase);
-            if(posChica == CAM_1A) { dimage(0, 0, &img1AChica); }
-            if(posBonny == CAM_1A) { dimage(0, 0, &img1ABonny); }
-            if(posFreddy == CAM_1A) { dimage(0, 0, &img1AFreddy); }
+            if(posChica == CAM_1A) { dimage(55, 0, &img1AChica); }
+            if(posBonny == CAM_1A) { dimage(19, 0, &img1ABonny); }
+            if(posFreddy == CAM_1A) { dimage(82, 0, &img1AFreddy); }
             break;
         }
 
         case CAM_1B: {
-            dimage(0, 0, &img1BBase);
-            if(posBonny == CAM_1B) { dimage(0, 0, &img1BBonny); }
-            if(posChica == CAM_1B) { dimage(0, 0, &img1BChica); }
-            if(posFreddy == CAM_1B) { dimage(0, 0, &img1BFreddy); }
+            dclear(C_BLACK);
+            dimage(0, 20, &img1BBase);
+            if(posBonny == CAM_1B) { dimage(77, 7, &img1BBonny); }
+            if(posChica == CAM_1B) { dimage(41, 1, &img1BChica); }
+            if(posFreddy == CAM_1B) { dimage(61, 10, &img1BFreddy); }
             break;
         }
 
         case CAM_1C: {
-            if(foxyStage == 0) { dimage(0, 0, &img1C0); }
-            if(foxyStage == 1) { dimage(0, 0, &img1C1); }
-            if(foxyStage == 2) { dimage(0, 0, &img1C2); }
-            if(foxyStage == 3) { dimage(0, 0, &img1C3); }
+            dclear(C_BLACK);
+            if(foxyStage == 0) { dimage(13, 0, &img1C0); }
+            if(foxyStage == 1) { dimage(13, 0, &img1C1); }
+            if(foxyStage == 2) { dimage(13, 0, &img1C2); }
+            if(foxyStage >= 3) { dimage(13, 0, &img1C3); }
             break;
         }
 
         case CAM_2A: {
-            dimage(0, 0, &img2ABase);
-            if(posBonny == CAM_2A) { dimage(0, 0, &img2ABonny); }
-            if(foxyStage == 4) { dimage(0, 0, &img2AFoxy4); }
-            if(foxyStage == 5) { dimage(0, 0, &img2AFoxy5); }
+            dclear(C_BLACK);
+            dimage(0, 2, &img2ABase);
+            if(posBonny == CAM_2A) { dimage(82, 16, &img2ABonny); }
+            if(foxyStage == 4) { dimage(67, 13, &img2AFoxy4); }
+            if(foxyStage == 5) { dimage(42, 17, &img2AFoxy5); }
             break;
         }
 
         case CAM_2B: {
-            dimage(0, 0, &img2BBase);
-            if(posBonny == CAM_2B) { dimage(0, 0, &img2BBonny); }
+            dclear(C_BLACK);
+            dimage(1, 0, &img2BBase);
+            if(posBonny == CAM_2B) { dimage(24, 0, &img2BBonny); }
             break;
         }
 
         case CAM_3: {
+            dclear(C_BLACK);
             dimage(0, 0, &img3Base);
-            if(posBonny == CAM_3) { dimage(0, 0, &img3Bonny); }
-            dimage(0, 0, &img3Light);
+            if(posBonny == CAM_3) { dimage(2, 7, &img3Bonny); }
+            dimage(0, 35, &img3Light);
             break;
         }
 
         case CAM_4A: {
-            dimage(0, 0, &img4ABase);
-            if(posChica == CAM_4A) { dimage(0, 0, &img4AChica); }
-            if(posFreddy == CAM_4A) { dimage(0, 0, &img4AFreddy); }
-            dimage(0, 0, &img4ACables);
+            dclear(C_BLACK);
+            dimage(25, 0, &img4ABase);
+            if(posChica == CAM_4A) { dimage(40, 10, &img4AChica); }
+            if(posFreddy == CAM_4A) { dimage(48, 16, &img4AFreddy); }
+            dimage(72, 0, &img4ACables);
             break;
         }
 
         case CAM_4B: {
+            dclear(C_BLACK);
             dimage(0, 0, &img4BBase);
-            if(posChica == CAM_4B) { dimage(0, 0, &img4BChica); }
-            if(posFreddy == CAM_4B) { dimage(0, 0, &img4BFreddy); }
+            if(posChica == CAM_4B) { dimage(46, 0, &img4BChica); }
+            if(posFreddy == CAM_4B) { dimage(20, 0, &img4BFreddy); }
             break;
         }
 
         case CAM_5: {
+            dclear(C_BLACK);
             dimage(0, 0, &img5Base);
-            if(posBonny == CAM_5) { dimage(0, 0, &img5Bonny); }
+            if(posBonny == CAM_5) { dimage(26, 4, &img5Bonny); }
             break;
         }
 
@@ -340,9 +351,10 @@ void drawCam(Cam cam) {
         }
 
         case CAM_7: {
+            dclear(C_BLACK);
             dimage(0, 0, &img7Base);
-            if(posChica == CAM_7) { dimage(0, 0, &img7Chica); }
-            if(posFreddy == CAM_7) { dimage(0, 0, &img7Freddy); }
+            if(posChica == CAM_7) { dimage(37, 8, &img7Chica); }
+            if(posFreddy == CAM_7) { dimage(24, 21, &img7Freddy); }
             break;
         }
     }
@@ -406,7 +418,7 @@ int tickAll() {
             leftLightOn = false;
             rightLightOn = false;
             drawCam(OFFICE);
-            dimage(0, 0, &imgBlackout);
+            dimage(13, 25, &imgBlackout);
             dupdate();
             sleep_ms(4000);
             dimage(0, 0, &imgFreddyBlackoutJumpscare);
@@ -426,7 +438,7 @@ int tickAll() {
             leftLightOn = false;
             rightLightOn = false;
             drawCam(OFFICE);
-            dimage(0, 0, &imgBonnyJumpscare);
+            dimage(22, 0, &imgBonnyJumpscare);
             dupdate();
         }
     }
@@ -438,7 +450,7 @@ int tickAll() {
             leftLightOn = false;
             rightLightOn = false;
             drawCam(OFFICE);
-            dimage(0, 0, &imgChicaJumpscare);
+            dimage(22, 1, &imgChicaJumpscare);
             dupdate();
         }
     }
@@ -477,7 +489,7 @@ int tickAll() {
                 leftLightOn = false;
                 rightLightOn = false;
                 drawCam(OFFICE);
-                dimage(0, 0, &imgFoxyJumpscare);
+                dimage(8, 7, &imgFoxyJumpscare);
                 dupdate();
             }
         }
@@ -500,7 +512,7 @@ int tickAll() {
             leftLightOn = false;
             rightLightOn = false;
             drawCam(OFFICE);
-            dimage(0, 0, &imgFreddyJumpscare);
+            dimage(19, 0, &imgFreddyJumpscare);
             dupdate();
         }
     }
