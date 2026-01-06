@@ -34,7 +34,7 @@ target_include_directories(tinymt32 PUBLIC
 )
 
 add_executable(fnac ${SOURCES} ${ASSETS} ${ASSETS_${FXSDK_PLATFORM}})
-target_compile_options(fnac PRIVATE -Wall -Wextra -Os -std=c++23)
+target_compile_options(fnac PRIVATE -Wall -Wextra -O3 -std=c++23)
 target_link_libraries(fnac Gint::Gint tinymt32 -lstdc++)
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
