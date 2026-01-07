@@ -136,6 +136,7 @@ uint actionWait;
 bool invuln;
 bool infBatt;
 bool infoVision;
+bool noBatt;
 bool stopTimer; // seems like stop_timer is bugged and doesn't stop the timer
 
 
@@ -206,7 +207,8 @@ int mainMenu() {
                         dimage(56, 0, &imgMenuBase);
                         dprint(6, 4+9*0, C_WHITE, "Invuln %s", invuln ? "#" : "");
                         dprint(6, 4+9*1, C_WHITE, "InfBatt %s", infBatt ? "#" : "");
-                        dprint(6, 4+9*2, C_WHITE, "InfoVis %s", infoVision ? "#" : "");
+                        dprint(6, 4+9*2, C_WHITE, "noBatt %s", noBatt ? "#" : "");
+                        dprint(6, 4+9*3, C_WHITE, "InfoVis %s", infoVision ? "#" : "");
 
                         drect(6, 4+9*(optionSelected), 6+59, 4+9*(optionSelected+1), C_INVERT);
                         dupdate();
@@ -214,7 +216,7 @@ int mainMenu() {
                         if(key.key == KEY_UP && optionSelected > 0) {
                             optionSelected -= 1;
                         }
-                        else if(key.key == KEY_DOWN && optionSelected < 2) {
+                        else if(key.key == KEY_DOWN && optionSelected < 3) {
                             optionSelected += 1;
                         }
                         else if(key.key == KEY_EXIT || key.key == KEY_MENU) {
@@ -225,7 +227,8 @@ int mainMenu() {
                             {
                                 case 0: invuln = !invuln; break;
                                 case 1: infBatt = !infBatt; break;
-                                case 2: infoVision = !infoVision; break;
+                                case 2: noBatt = !noBatt; break;
+                                case 3: infoVision = !infoVision; break;
                             }
                         }
                     }
@@ -262,7 +265,7 @@ void drawCam(Cam cam) {
             if(leftDoorClosed) { dimage(8, 6, &imgOfficeLeftDoor); }
             if(rightDoorClosed) { dimage(103, 6, &imgOfficeRightDoor); }
             dprint_opt(105, 1, C_WHITE, C_NONE, DTEXT_RIGHT, DTEXT_TOP, "%dAM", hour);
-            dprint_opt(19, 1, C_WHITE, C_NONE, DTEXT_LEFT, DTEXT_TOP, "%d%", powerLeft);
+            dprint_opt(19, 1, C_WHITE, C_NONE, DTEXT_LEFT, DTEXT_TOP, "%d%", (uint)(powerLeft/10.0));
             char hashes[powerUsage + 1]; // +1 for null terminator
             for (uint i = 0; i < powerUsage; i++) {
                 hashes[i] = '#';
@@ -410,23 +413,30 @@ void move(const std::array<std::array<Cam, 2>, CAM_COUNT> graph, Cam* currentPos
 
 int tickAll() {
     gameTicks += 1;
+    if(dead || hour == 6 || stopTimer) {
+        return TIMER_STOP;
+    }
 
-    if(gameTicks % (uint)(ticksBasePower/powerUsage) == 0) {
+    if(gameTicks % (uint)(ticksBasePower) == 0 || noBatt) {
         if(!infBatt) {
             powerLeft -= 1;
         }
         if(powerLeft == 0) {
-            leftDoorClosed = false;
-            rightDoorClosed = false;
-            leftLightOn = false;
-            rightLightOn = false;
-            drawCam(OFFICE);
-            dimage(13, 25, &imgBlackout);
-            dupdate();
-            sleep_ms(4000);
-            dimage(0, 0, &imgFreddyBlackoutJumpscare);
-            dupdate();
             dead = true;
+            return TIMER_STOP;
+        }
+        if(currentCam == OFFICE) {
+            drawCam(OFFICE);
+        }
+    }
+
+    if(gameTicks % (uint)(1/0.01) == 0) {
+        if(!infBatt) {
+            powerLeft -= powerUsage-1;
+        }
+        if(powerLeft == 0) {
+            dead = true;
+            return TIMER_STOP;
         }
         if(currentCam == OFFICE) {
             drawCam(OFFICE);
@@ -568,9 +578,6 @@ int tickAll() {
         }
     }
 
-    if(dead || hour == 6 || stopTimer) {
-        return TIMER_STOP;
-    }
     return TIMER_CONTINUE;
 }
 
@@ -584,8 +591,8 @@ void printData() {
     dprint(1, 1+8*5, C_BLACK, "Power: %d", powerLeft);
     dprint(1, 1+8*6, C_BLACK, "Drain: %d", powerUsage);
     dprint(1, 1+8*7, C_BLACK, "Cam: %s", camToStr(currentCam));
-    dprint(80, 1+8*0, C_BLACK, "GT: %d", gameTicks);
-    dprint(80, 1+8*1, C_BLACK, "AW: %d", actionWait);
+    dprint(80, 1+8*0, C_BLACK, "GT:%llu", (unsigned long long)gameTicks);
+    dprint(80, 1+8*1, C_BLACK, "AW: %llu", (unsigned long long)actionWait);
     dprint(80, 1+8*2, C_BLACK, "LDr: %s", leftDoorClosed ? "Yes" : "No");
     dprint(80, 1+8*3, C_BLACK, "RDr: %s", rightDoorClosed ? "Yes" : "No");
     dprint(80, 1+8*4, C_BLACK, "LLt: %s", leftLightOn ? "On" : "Off");
@@ -595,7 +602,7 @@ void printData() {
     dupdate();
 }
 
-void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL, float powerDrainTime = 3) {
+void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL, float passivePowerDrainTime = 3) {
     // reset global values
     leftDoorClosed = false;
     rightDoorClosed = false;
@@ -605,7 +612,7 @@ void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL
     animatronic_timer = -1;
     hour = 12;
     powerUsage = 1;
-    powerLeft = 100;
+    powerLeft = 999;
     leftLightOn = false;
     rightLightOn = false;
     actionWait = 0;
@@ -627,7 +634,7 @@ void startCustomNight(uint bonnyLVL, uint chicaLVL, uint freddyLVL, uint foxyLVL
     lvlChica = chicaLVL;
     lvlFreddy = freddyLVL;
     lvlFoxy = foxyLVL;
-    ticksBasePower = (uint)(powerDrainTime/0.01);
+    ticksBasePower = (uint)(passivePowerDrainTime/0.01);
 
     uint seed = rtc_ticks();
 	srand(seed);
@@ -806,7 +813,7 @@ void switchLight(int light) {
 
 void startNight(int night) {
     if(night == 1) {
-        startCustomNight(0, 0, 0, 0, 9.6);
+        startCustomNight(0, 0, 0, 0, 100000 /*BIG value so it never happens*/);
     }
     else if(night == 2) {
         startCustomNight(3, 1, 1, 0, 6);
@@ -818,10 +825,10 @@ void startNight(int night) {
         startCustomNight(2, 4, 6, bounded_rand(2) + 1, 4);
     }
     else if(night == 5) {
-        startCustomNight(5, 7, 5, 3, 4);
+        startCustomNight(5, 7, 5, 3, 3);
     }
     else if(night == 6) {
-        startCustomNight(10, 12, 16, 4);
+        startCustomNight(10, 12, 16, 3);
     }
 }
 
@@ -863,37 +870,37 @@ int main(void)
         		if(keydown(KEY_EXIT) || keydown(KEY_MENU)) { timer_stop(animatronic_timer); stopTimer = true; break; }
             
                 if(actionWait == 0) {
-            if((currentCam == OFFICE)) {
-                if(keydown(KEY_PLUS)) { switchDoor(0); }
-                if(keydown(KEY_MINUS)) { switchDoor(1); }
-                if(keydown(KEY_TIMES)) { switchLight(0); }
-                if(keydown(KEY_DIV)) { switchLight(1); }
-            }
-
-            // camera switches
-            if(keydown(KEY_0)) {switchCamera(OFFICE);}
-            if(keydown(KEY_1)) {switchCamera(CAM_1A);}
-            if(keydown(KEY_2)) {switchCamera(CAM_2A);}
-            if(keydown(KEY_3)) {switchCamera(CAM_3);}
-            if(keydown(KEY_4)) {switchCamera(CAM_4A);}
-            if(keydown(KEY_5)) {switchCamera(CAM_5);}
-            if(keydown(KEY_6)) {switchCamera(CAM_6);}
-            if(keydown(KEY_7)) {switchCamera(CAM_7);}
-
-            if(keydown(KEY_XOT)) {
-                if(currentCam == CAM_1B || currentCam == CAM_1C) {switchCamera(CAM_1A);}
-                if(currentCam == CAM_2B) {switchCamera(CAM_2A);}
-                if(currentCam == CAM_4B) {switchCamera(CAM_4A);}
-            }
-            if(keydown(KEY_LOG)) {
-                if(currentCam == CAM_1A || currentCam == CAM_1C) {switchCamera(CAM_1B);}
-                if(currentCam == CAM_2A) {switchCamera(CAM_2B);}
-                if(currentCam == CAM_4A) {switchCamera(CAM_4B);}
-            }
-            if(keydown(KEY_LN)) {
-                if(currentCam == CAM_1A || currentCam == CAM_1B) {switchCamera(CAM_1C);}
-            }
-        }
+                    if((currentCam == OFFICE)) {
+                        if(keydown(KEY_PLUS)) { switchDoor(0); }
+                        if(keydown(KEY_MINUS)) { switchDoor(1); }
+                        if(keydown(KEY_TIMES)) { switchLight(0); }
+                        if(keydown(KEY_DIV)) { switchLight(1); }
+                    }
+                
+                    // camera switches
+                    if(keydown(KEY_0)) {switchCamera(OFFICE);}
+                    if(keydown(KEY_1)) {switchCamera(CAM_1A);}
+                    if(keydown(KEY_2)) {switchCamera(CAM_2A);}
+                    if(keydown(KEY_3)) {switchCamera(CAM_3);}
+                    if(keydown(KEY_4)) {switchCamera(CAM_4A);}
+                    if(keydown(KEY_5)) {switchCamera(CAM_5);}
+                    if(keydown(KEY_6)) {switchCamera(CAM_6);}
+                    if(keydown(KEY_7)) {switchCamera(CAM_7);}
+                
+                    if(keydown(KEY_XOT)) {
+                        if(currentCam == CAM_1B || currentCam == CAM_1C) {switchCamera(CAM_1A);}
+                        if(currentCam == CAM_2B) {switchCamera(CAM_2A);}
+                        if(currentCam == CAM_4B) {switchCamera(CAM_4A);}
+                    }
+                    if(keydown(KEY_LOG)) {
+                        if(currentCam == CAM_1A || currentCam == CAM_1C) {switchCamera(CAM_1B);}
+                        if(currentCam == CAM_2A) {switchCamera(CAM_2B);}
+                        if(currentCam == CAM_4A) {switchCamera(CAM_4B);}
+                    }
+                    if(keydown(KEY_LN)) {
+                        if(currentCam == CAM_1A || currentCam == CAM_1B) {switchCamera(CAM_1C);}
+                    }
+                }
 
                 if(infoVision) {printData();}
 
@@ -901,7 +908,18 @@ int main(void)
         		if(dead) {
                     timer_stop(animatronic_timer);
                     stopTimer = true;
-
+                    if(powerLeft <= 0) { // play blackout
+                        leftDoorClosed = false;
+                        rightDoorClosed = false;
+                        leftLightOn = false;
+                        rightLightOn = false;
+                        drawCam(OFFICE);
+                        dimage(13, 25, &imgBlackout);
+                        dupdate();
+                        sleep_ms(4000);
+                        dimage(0, 0, &imgFreddyBlackoutJumpscare);
+                        dupdate();
+                    }
                     sleep_ms(2000);
                     break;
         		}
